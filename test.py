@@ -108,6 +108,11 @@ for i in range(all_stock_num):
         break
     '''
     stock_code = str(int(stock_array[i, 0]))
+    if len(stock_code) < 6:
+        prefix = ''
+        for j in range(6 - len(stock_code)):
+            prefix = prefix + '0'
+        stock_code = prefix + stock_code
     stock_time_to_market = str(int(stock_array[i, 1]))
     # avoid unmeaningful time
     if len(stock_time_to_market) != 8:
