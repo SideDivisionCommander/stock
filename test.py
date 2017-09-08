@@ -74,8 +74,8 @@ def get_macd_cross_near_zero(macd_array, stock_code):
         if i == 0 or i == 1:
             continue
         elif macd_array[i, 2] >= 0.00 and macd_array[i, 2] <= 0.10\
-             and abs(macd_array[i, 0]) <= 0.05\
-             and abs(macd_array[i, 1]) <= 0.05\
+             and macd_array[i, 0] >= 0.00 and macd_array[i, 0] <= 0.10\
+             and macd_array[i, 1] >= 0.00 and macd_array[i, 1] <= 0.10\
              and macd_array[i - 2, 0] < macd_array[i - 2, 1]\
              and macd_array[i - 1, 0] < macd_array[i - 1, 1]:
             # occur just now
