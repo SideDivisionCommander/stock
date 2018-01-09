@@ -60,12 +60,17 @@ def main():
     #file config
     stock_basic_data_file = 'stockbasic.csv'
     macd_filter_result_file = 'macd_crossing.txt'
+    ema_file = 'ema.txt'
+    new_level = 100
+    mode = "init"
+    #mode = "normal"
     #Get data from server
-    get_basic_stock_data(stock_basic_data_file)
+    if "init" == mode:
+        get_basic_stock_data(stock_basic_data_file)
     #Read data from file
     df = pd.read_csv(stock_basic_data_file)
-    get_macd_golden_crossing(df, macd_filter_result_file)
-
+    get_macd_golden_crossing(df, macd_filter_result_file, new_level, ema_file, mode)
+    return
 
 if __name__ == "__main__":
     main()
