@@ -4,103 +4,111 @@ import os, sys
 import datetime
 import time
 import numpy as np
+from numpy import genfromtxt
+import scipy as sc
 import pandas as pd
 import tushare as ts
 from pandas import Series, DataFrame
 
-def format_stock_code(code):
-    formatted_code = str(int(code))
-    if len(formatted_code) < 6:
-        prefix = ''
-        for j in range(6 - len(formatted_code)):
-            prefix = prefix + '0'
-        formatted_code = prefix + formatted_code
-    return formatted_code
-
-def format_stock_time_to_market(time):
-    formatted_time_to_market = str(int(time))
-    if len(time) != 8:
-        return 'invalid'
-    formatted_time_to_market = formatted_time_to_market[:4] + '-' + formatted_time_to_market[4:6] + '-' + formatted_time_to_market[6:]
-    return formatted_time_to_market
-
-def save_ema(data_array, ema_file):
+'''
+Function: 
+'''
+def save_macd_para(macd_para_array, macd_para_file):
     tag1 = ","
     tag2 = ";"
-    f = open(ema_file,'a')
+    f = open(macd_para_file, 'a')
     #iter every row 
-    for i in range(data_array.shape[0]):  
-        f.write(repr(data_array[i, 0]) + tag1)
-        f.write(repr(data_array[i, 1]) + tag2)
+    for i in range(data_array.shape[0]): 
+        f.write(repr(macd_para_array[i, 0]) + tag1)
+        f.write(repr(macd_para_array[i, 1]) + tag1)
+        f.write(repr(macd_para_array[i, 2]) + tag2)
     f.write("\n")
     f.close()
     return
 
-def init_macd(data_array, new_level, ema_file):
-    #allocate space for open price in data_array
-    open_price_array = np.zeros([data_array.shape[0], 1])
-    #allocate space for close price in data_array
-    close_price_array = np.zeros([data_array.shape[0], 1])
-    #get all open price in data_array (all num in the first column)
-    open_price_array = data_array[:, 1]
-    #get close open price in data_array (all num in the close column)
-    close_price_array = data_array[:, 2]
-    #allocate space for DEA, DIFF, MACD
-    macd_array = np.zeros([data_array.shape[0], 3])
-    #allocate space for EMA_12 and EMA_26
-    ema_array = np.zeros([data_array.shape[0], 2])
-    #the DIFF and DEA of first time to market day is 0
-    DIFF = 0
-    DEA = 0
-    MACD = 0
+'''
+Function: 
+'''
+def init_macd_para(stock_k_data_array, new_level, macd_para_file):
+    # Allocate space for close price in data_array
+    close_price_array = np.zeros([stock_k_data_array.shape[0], 1])
+    # Get all open price in data_array (all num in the first column)
+    close_price_array = stock_k_data_array[:, 2]
+    # Allocate space for EMA 12, EMA 26, DEA
+    macd_para_array = np.zeros([stock_k_data_array.shape[0], 3])
+    # Init the all para of first time to market day (all zero)
     EMA_12 = 0
     EMA_26 = 0
+    DIFF = 0
+    DEA = 0
 
-    for i in range(data_array.shape[0]):
+    for i in range(stock_k_data_array.shape[0]):
         if 0 == i:
-            DIFF = 0
-            DEA = 0
-            MACD = 0
             EMA_12 = close_price_array[i]
             EMA_26 = close_price_array[i]
+            DIFF = 0
+            DEA = 0
         else:
             EMA_12 = EMA_12 * 11 / 13 + close_price_array[i] * 2 / 13
             EMA_26 = EMA_26 * 25 / 27 + close_price_array[i] * 2 / 27
             DIFF = EMA_12 - EMA_26
             DEA = DEA * 8 /10 + DIFF * 2 / 10
-            MACD = (DIFF - DEA) * 2
-        macd_array[i, 0] = round(DIFF, 2)
-        macd_array[i, 1] = round(DEA, 2)
-        macd_array[i, 2] = round(MACD, 2)
-        ema_array[i, 0] = EMA_12
-        ema_array[i, 1] = EMA_26
-    # Save ema_12 and ema_26 in file
-    save_ema(ema_array[data_array.shape[0] - new_level:data_array.shape[0], :], ema_file)
-    # return macd_array[data_array.shape[0] - new_level:data_array.shape[0], :]
+        macd_para_array[i, 0] = EMA_12
+        macd_para_array[i, 1] = EMA_26
+        macd_para_array[i, 2] = DEA
+    # Save last new level EMA 12, EMA 26, DEA in file
+    save_macd_para(macd_para_array[stock_k_data_array.shape[0] - new_level:stock_k_data_array.shape[0], :], macd_para_file)
     return 
 
-def get_macd_cross_near_zero(macd_array, stock_code, macd_file):
-    f = open(macd_file,'a')
-    for i in range(macd_array.shape[0]):
-        if i == 0 or i == 1:
+'''
+Function: 
+'''
+def get_macd_cross_near_zero(macd_para_file, stock_code_array, macd_filter_result_file):
+    tag1 = ';'
+    tag2 = ','
+    os.path.exists(macd_filter_result_file):
+        print("Removing old filter macd result file: " + macd_filter_result_file)
+        os.remove(macd_filter_result_file)
+    f1 = open(macd_para_file, 'r')
+    row_index = 0
+    for line in f1:
+        if row_index == 0:
+            row_index += 1
             continue
-        elif macd_array[i, 2] >= 0.00 and macd_array[i, 2] <= 0.10\
-             and macd_array[i, 0] >= 0.00 and macd_array[i, 0] <= 0.10\
-             and macd_array[i, 1] >= 0.00 and macd_array[i, 1] <= 0.10\
-             and macd_array[i - 2, 0] < macd_array[i - 2, 1]\
-             and macd_array[i - 1, 0] < macd_array[i - 1, 1]:
-            # occur just now
-            if i >= 98:
-                print("occur: " + stock_code + " position: " + str(i))
-                f.write(stock_code + "\n")
-                f.write(str(i) + "\n")
-                f.write("\n")
-                f.close()
-            return True
-    f.close()
-    return False
+        macd_para_list = line.split(tag1)
+        macd_para_array = np.zeros([len(macd_para_list), 3])
+        for para in macd_para_list:
+            separate_para = para.split(tag2)
+            EMA_12 = separate_para[0]
+            EMA_26 = separate_para[1]
+            DIFF = EMA_12 - EMA_26
+            DEA = separate_para[2]
+            MACD = (DIFF - DEA) * 2
+            macd_para_array[row_index - 1, 0] = round(DIFF, 2)
+            macd_para_array[row_index - 1, 1] = round(DEA, 2)
+            macd_para_array[row_index - 1, 2] = round(MACD, 2)
+        
+        f2 = open(macd_filter_result_file, 'a')
+        for i in range(macd_para_array.shape[0]):
+            if i == 0 or i == 1:
+                continue
+            elif macd_para_array[i, 2] >= 0.00 and macd_para_array[i, 2] <= 0.10\
+                and macd_para_array[i, 0] >= 0.00 and macd_para_array[i, 0] <= 0.10\
+                and macd_para_array[i, 1] >= 0.00 and macd_para_array[i, 1] <= 0.10\
+                and macd_para_array[i - 2, 0] < macd_para_array[i - 2, 1]\
+                and macd_para_array[i - 1, 0] < macd_para_array[i - 1, 1]:
+                # occur just now
+                if i >= 98:
+                    print("Occur: " + stock_code_array[row_index - 1] + " position: " + str(i))
+                    f2.write(stock_code_array[row_index - 1] + "\n")
+                    f2.write(str(i) + "\n")
+                    f2.write("\n")
+        f2.close()
+        row_index += 1
+    f1.close()
+    return
 
-def update_ema(ema_file, date, data_array):
+def update_ema(ema_file, date, stock_code_array):
     tag = ";"
     f1 = open(ema_file, 'r')
     f2 = open('tmp.txt', 'a')
@@ -111,7 +119,7 @@ def update_ema(ema_file, date, data_array):
             f2.write(date)
             f2.write("\n")
             continue
-        close_price = get_newest_close_price(format_stock_code(data_array[row_index - 1]), date)
+        close_price = get_newest_close_price(format_stock_code(stock_code_array[row_index - 1]), date)
         ema_list = line.split(tag)
         newest_ema = calc_ema(ema_list[-1], close_price)
         ema_list.pop(0)
@@ -137,42 +145,30 @@ def calc_ema(last_ema, newest_close_price):
     ema_26 = float(last_ema_26) * 25 / 27 + newest_close_price * 2 / 27
     return repr(ema_12) + "," + repr(ema_26)
 
-
-
-
 '''
-Get macd golden crossing over zero 
+Function: 
 '''
-def get_macd_golden_crossing(data, macd_file, new_level, ema_file, mode):
-    all_stock_num = data.shape[0]
-    stock_array = np.zeros([all_stock_num, 2])
-    stock_array[:, 0] = data['code']
-    stock_array[:, 1] = data['timeToMarket']
-
+def get_macd_golden_crossing(stock_basic_data_file, macd_filter_result_file, new_level, macd_para_file, mode):
+    stock_basic_data = genfromtxt(stock_basic_data_file, delimiter=",")    
     if "init" == mode:
-        #reinit ema file 
-        if os.path.exists(ema_file):
-        print("Removing old ema file: " + file)
-        os.remove(file)
-        f = open(ema_file,'a')
-        #add timestamp at first row
+        # Update macd_para file from the time to market 
+        if os.path.exists(macd_para_file):
+            print("Removing old ema file: " + file)
+            os.remove(file)
+        f = open(macd_para_file,'a')
+        # Add timestamp at first row of file
         f.write(time.strftime("%Y-%m-%d", time.localtime()))
         f.write("\n")
+        f.close()
         
-        for i in range(all_stock_num):
-            stock_code = format_stock_code(stock_array[i, 0])
-            stock_time_to_market = format_stock_time_to_market(stock_array[i, 1])
-            # To avoid stock with unmeaningful time
-            if 'invalid' == stock_time_to_market:
-                continue
+        for i in range(stock_basic_data.shape[0]):
+            stock_code = stock_basic_data[i, 0]
+            stock_time_to_market = stock_basic_data[i, 1]
             stock_k_data_array = np.array(ts.get_k_data(stock_code, start=stock_time_to_market))
-            # To avoid new stock or secondary new stock
-            if(stock_k_data_array.shape[0] < new_level):
-                continue
-            
-            # To init ema file
-            init_macd(stock_k_data_array, new_level, ema_file)
-            #get_macd_cross_near_zero(macd_array, stock_code, macd_file)
+            init_macd_para(stock_k_data_array, new_level, macd_para_file)
+
+    get_macd_cross_near_zero(macd_para_file, stock_basic_data[:, 0], macd_filter_result_file)
+'''
     elif "normal" == mode:
         date = time.strftime("%Y-%m-%d", time.localtime())
         f = open(ema_file, 'r')
@@ -183,11 +179,11 @@ def get_macd_golden_crossing(data, macd_file, new_level, ema_file, mode):
             return
         f.close()
         update_ema(ema_file, date, stock_array[:, 0])
-        calc_macd(ema_file)
-        
+        get_macd_cross_near_zero(ema_file, stock_array[:, 0], macd_file)
 
     else:
         print("Not valid mode, please check !")
+'''
     return 
 
         

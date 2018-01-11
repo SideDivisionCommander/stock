@@ -2,7 +2,7 @@ __author__ = 'SideDivisionCommander'
 
 import pandas as pd
 from pandas import Series, DataFrame
-from data import get_basic_stock_data
+from data import update_basic_stock_data
 from macd import get_macd_golden_crossing
 
 def welcome():
@@ -60,16 +60,14 @@ def main():
     #file config
     stock_basic_data_file = 'stockbasic.csv'
     macd_filter_result_file = 'macd_crossing.txt'
-    ema_file = 'ema.txt'
+    macd_para_file = 'macd_para.txt'
     new_level = 100
     mode = "init"
     #mode = "normal"
     #Get data from server
     if "init" == mode:
-        get_basic_stock_data(stock_basic_data_file)
-    #Read data from file
-    df = pd.read_csv(stock_basic_data_file)
-    get_macd_golden_crossing(df, macd_filter_result_file, new_level, ema_file, mode)
+        update_basic_stock_data(stock_basic_data_file, new_level)
+    get_macd_golden_crossing(stock_basic_data_file, macd_filter_result_file, new_level, macd_para_file, mode)
     return
 
 if __name__ == "__main__":
