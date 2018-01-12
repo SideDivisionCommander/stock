@@ -68,6 +68,7 @@ def main():
     if "init" == mode:
         update_basic_stock_data(stock_basic_data_file, new_level)
     get_macd_golden_crossing(stock_basic_data_file, macd_filter_result_file, new_level, macd_para_file, mode)
+    complete()
     return
 
 if __name__ == "__main__":

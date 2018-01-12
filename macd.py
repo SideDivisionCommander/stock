@@ -108,42 +108,57 @@ def get_macd_cross_near_zero(macd_para_file, stock_code_array, macd_filter_resul
     f1.close()
     return
 
-def update_ema(ema_file, date, stock_code_array):
-    tag = ";"
-    f1 = open(ema_file, 'r')
-    f2 = open('tmp.txt', 'a')
+'''
+Function:
+'''
+def update_macd_para(macd_para_file, date, stock_basic_data):
+    tag = ';'
+    tmp_txt = 'tmp.txt'
+    f1 = open(macd_para_file, 'r')
+    f2 = open(tmp_txt, 'a')
     row_index = 0
     for line in f1:
         if row_index == 0:
-            row_index += 1
             f2.write(date)
             f2.write("\n")
+            row_index += 1
             continue
-        close_price = get_newest_close_price(format_stock_code(stock_code_array[row_index - 1]), date)
-        ema_list = line.split(tag)
-        newest_ema = calc_ema(ema_list[-1], close_price)
-        ema_list.pop(0)
-        ema_list.append(newest_ema)
-        row_index += 1
-        for e in ema_list:
-            f2.write(e + tag)
+        close_price = get_newest_close_price(stock_basic_data[row_index - 1], date)
+        macd_para_list = line.split(tag)
+        newest_macd_para = calc_macd_para(macd_para_list[-1], close_price)
+        macd_para_list.pop(0)
+        macd_para_list.append(newest_macd_para)
+        for para in macd_para_list:
+            f2.write(para + tag)
         f2.write("\n")
+        row_index += 1
     f2.close()
     f1.close()
-    os.remove(ema_file)
-    os.rename('tmp.txt', ema_file)
+    os.remove(macd_para_file)
+    os.rename(tmp_txt, macd_para_file)
     return
 
+'''
+Function:
+'''
 def get_newest_close_price(stock_code, date):
     stock_k_data_array = np.array(ts.get_k_data(stock_code, start=date))
     return stock_k_data_array[0, 2]
 
-def calc_ema(last_ema, newest_close_price):
-    last_ema_12 = last_ema.split(',')[0]
-    last_ema_26 = last_ema.split(',')[1]
-    ema_12 = float(last_ema_12) * 11 / 13 + newest_close_price * 2 / 13
-    ema_26 = float(last_ema_26) * 25 / 27 + newest_close_price * 2 / 27
-    return repr(ema_12) + "," + repr(ema_26)
+'''
+Function:
+'''
+def calc_macd_para(last_macd_para, last_close_price):
+    tag = ','
+    separate_para = last_macd_para.split(tag) 
+    EMA_12 = separate_para[0]
+    EMA_26 = separate_para[1]
+    DEA = separate_para[2]
+    EMA_12 = float(EMA_12) * 11 / 13 + last_close_price * 2 / 13
+    EMA_26 = float(EMA_26) * 25 / 27 + last_close_price * 2 / 27
+    DIFF = EMA_12 - EMA_26
+    DEA = DEA * 8 /10 + DIFF * 2 / 10
+    return repr(EMA_12) + ',' + repr(EMA_26) + ',' + repr(DEA)
 
 '''
 Function: 
@@ -166,24 +181,20 @@ def get_macd_golden_crossing(stock_basic_data_file, macd_filter_result_file, new
             stock_time_to_market = stock_basic_data[i, 1]
             stock_k_data_array = np.array(ts.get_k_data(stock_code, start=stock_time_to_market))
             init_macd_para(stock_k_data_array, new_level, macd_para_file)
-
-    get_macd_cross_near_zero(macd_para_file, stock_basic_data[:, 0], macd_filter_result_file)
-'''
     elif "normal" == mode:
         date = time.strftime("%Y-%m-%d", time.localtime())
-        f = open(ema_file, 'r')
+        f = open(macd_para_file, 'r')
         first_line = f.readlines()[0]:
         if date == first_line:
             print("All data has been updated.")
             f.close()
             return
         f.close()
-        update_ema(ema_file, date, stock_array[:, 0])
-        get_macd_cross_near_zero(ema_file, stock_array[:, 0], macd_file)
-
+        update_macd_para(macd_para_file, date, stock_basic_data[:, 0])
     else:
         print("Not valid mode, please check !")
-'''
+        return
+    get_macd_cross_near_zero(macd_para_file, stock_basic_data[:, 0], macd_filter_result_file)    
     return 
 
         
