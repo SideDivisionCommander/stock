@@ -66,7 +66,7 @@ Function:
 def get_macd_cross_near_zero(macd_para_file, stock_code_array, macd_filter_result_file):
     tag1 = ';'
     tag2 = ','
-    os.path.exists(macd_filter_result_file):
+    if os.path.exists(macd_filter_result_file):
         print("Removing old filter macd result file: " + macd_filter_result_file)
         os.remove(macd_filter_result_file)
     f1 = open(macd_para_file, 'r')
@@ -184,7 +184,7 @@ def get_macd_golden_crossing(stock_basic_data_file, macd_filter_result_file, new
     elif "normal" == mode:
         date = time.strftime("%Y-%m-%d", time.localtime())
         f = open(macd_para_file, 'r')
-        first_line = f.readlines()[0]:
+        first_line = f.readlines()[0]
         if date == first_line:
             print("All data has been updated.")
             f.close()
