@@ -34,7 +34,7 @@ def save_macd_para(macd_para_array, macd_para_file):
     tag2 = ";"
     f = open(macd_para_file, 'a')
     #iter every row 
-    for i in range(data_array.shape[0]): 
+    for i in range(macd_para_array.shape[0]): 
         f.write(repr(macd_para_array[i, 0]) + tag1)
         f.write(repr(macd_para_array[i, 1]) + tag1)
         f.write(repr(macd_para_array[i, 2]) + tag2)
@@ -92,17 +92,22 @@ def get_macd_cross_near_zero(macd_para_file, stock_code_array, macd_filter_resul
             row_index += 1
             continue
         macd_para_list = line.split(tag1)
+        #pop the last element in list, because it is null
+        macd_para_list.pop(len(macd_para_list)-1)
+        print(len(macd_para_list))
         macd_para_array = np.zeros([len(macd_para_list), 3])
+        para_index = 0
         for para in macd_para_list:
             separate_para = para.split(tag2)
-            EMA_12 = separate_para[0]
-            EMA_26 = separate_para[1]
+            EMA_12 = float(separate_para[0])
+            EMA_26 = float(separate_para[1])
             DIFF = EMA_12 - EMA_26
-            DEA = separate_para[2]
+            DEA = float(separate_para[2])
             MACD = (DIFF - DEA) * 2
-            macd_para_array[row_index - 1, 0] = round(DIFF, 2)
-            macd_para_array[row_index - 1, 1] = round(DEA, 2)
-            macd_para_array[row_index - 1, 2] = round(MACD, 2)
+            macd_para_array[para_index, 0] = round(DIFF, 2)
+            macd_para_array[para_index, 1] = round(DEA, 2)
+            macd_para_array[para_index, 2] = round(MACD, 2)
+            para_index += 1
         
         f2 = open(macd_filter_result_file, 'a')
         for i in range(macd_para_array.shape[0]):
@@ -121,6 +126,8 @@ def get_macd_cross_near_zero(macd_para_file, stock_code_array, macd_filter_resul
                     f2.write("\n")
         f2.close()
         row_index += 1
+        if row_index%100 == 0:
+            print(str(row_index) + " complete")
     f1.close()
     return
 
@@ -182,6 +189,7 @@ Function:
 def get_macd_golden_crossing(stock_basic_data_file, macd_filter_result_file, new_level, macd_para_file, mode):
     #stock_basic_data = genfromtxt(stock_basic_data_file, delimiter=",")
     stock_basic_data = get_basic_data(stock_basic_data_file) 
+    '''
     if "init" == mode:
         # Update macd_para file from the time to market 
         if os.path.exists(macd_para_file):
@@ -211,7 +219,8 @@ def get_macd_golden_crossing(stock_basic_data_file, macd_filter_result_file, new
     else:
         print("Not valid mode, please check !")
         return
-    get_macd_cross_near_zero(macd_para_file, stock_basic_data[:, 0], macd_filter_result_file)    
+    '''
+    get_macd_cross_near_zero(macd_para_file, stock_basic_data['code'], macd_filter_result_file)    
     return 
 
         
