@@ -11,6 +11,22 @@ import tushare as ts
 from pandas import Series, DataFrame
 
 '''
+Function:
+'''
+def get_basic_data(stock_basic_data_file):
+    stock_basic_data = {}
+    stock_basic_data['code'] = []
+    stock_basic_data['timeToMarket'] = []
+    with open(stock_basic_data_file) as f:
+        for line in f:
+            l = line.split(',')
+            stock_code = l[0]
+            time_to_market = l[1]
+            stock_basic_data['code'].append(stock_code)
+            stock_basic_data['timeToMarket'].append(time_to_market)
+    return stock_basic_data
+ 
+'''
 Function: 
 '''
 def save_macd_para(macd_para_array, macd_para_file):
@@ -164,21 +180,22 @@ def calc_macd_para(last_macd_para, last_close_price):
 Function: 
 '''
 def get_macd_golden_crossing(stock_basic_data_file, macd_filter_result_file, new_level, macd_para_file, mode):
-    stock_basic_data = genfromtxt(stock_basic_data_file, delimiter=",")    
+    #stock_basic_data = genfromtxt(stock_basic_data_file, delimiter=",")
+    stock_basic_data = get_basic_data(stock_basic_data_file) 
     if "init" == mode:
         # Update macd_para file from the time to market 
         if os.path.exists(macd_para_file):
-            print("Removing old ema file: " + file)
-            os.remove(file)
+            print("Removing old macd para file: " + macd_para_file)
+            os.remove(macd_para_file)
         f = open(macd_para_file,'a')
         # Add timestamp at first row of file
         f.write(time.strftime("%Y-%m-%d", time.localtime()))
         f.write("\n")
         f.close()
         
-        for i in range(stock_basic_data.shape[0]):
-            stock_code = stock_basic_data[i, 0]
-            stock_time_to_market = stock_basic_data[i, 1]
+        for i in range(len(stock_basic_data['code'])):
+            stock_code = stock_basic_data['code'][i]
+            stock_time_to_market = stock_basic_data['timeToMarket'][i]
             stock_k_data_array = np.array(ts.get_k_data(stock_code, start=stock_time_to_market))
             init_macd_para(stock_k_data_array, new_level, macd_para_file)
     elif "normal" == mode:
