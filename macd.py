@@ -145,23 +145,15 @@ def update_macd_para(macd_para_file, last_date, date, stock_basic_data):
             continue
         close_price_array = get_newest_close_price(stock_basic_data[row_index - 1], last_date)
         macd_para_list = line.split(tag)
-        if close_price_array.shape[0] <= 1:
-            print("All data has been updated.")
-            f2.close()
-            f1.close()
-            os.remove(tmp_txt)
-            return
-        elif close_price_array.shape[0] >= 90:
+        macd_para_list.pop()           
+        if close_price_array.shape[0] >= 90:
             print("Data is too old, please run in init mode first.")
             f2.close()
             f1.close()
             os.remove(tmp_txt)
             return
         for i in range(close_price_array.shape[0]):
-            # ignore the first line, because the first line should be old data
-            if i == 0:
-                continue
-            newest_macd_para = calc_macd_para(macd_para_list[-1], close_price[i, 2])
+            newest_macd_para = calc_macd_para(macd_para_list[-1], close_price_array[i, 2])
             macd_para_list.pop(0)
             macd_para_list.append(newest_macd_para)
         for para in macd_para_list:
@@ -181,6 +173,8 @@ Function:
 '''
 def get_newest_close_price(stock_code, date):
     stock_k_data_array = np.array(ts.get_k_data(stock_code, start=date))
+    if stock_k_data_array.shape[0] == 0:
+        return np.zeros([0, 0])
     return stock_k_data_array[:, 2]
 
 '''
@@ -221,6 +215,8 @@ def get_macd_golden_crossing(stock_basic_data_file, macd_filter_result_file, new
             stock_time_to_market = stock_basic_data['timeToMarket'][i]
             stock_k_data_array = np.array(ts.get_k_data(stock_code, start=stock_time_to_market))
             init_macd_para(stock_k_data_array, new_level, macd_para_file)
+            if i%100 == 0:
+                print("Init macd para " + str(i) + " complete")
     elif "normal" == mode:
         date = time.strftime("%Y-%m-%d", time.localtime())
         f = open(macd_para_file, 'r')
@@ -230,7 +226,7 @@ def get_macd_golden_crossing(stock_basic_data_file, macd_filter_result_file, new
             f.close()
             return
         f.close()
-        update_macd_para(macd_para_file, last_date, date, stock_basic_data[:, 0])
+        update_macd_para(macd_para_file, last_date, date, stock_basic_data['code'])
     else:
         print("Not valid mode, please check !")
         return
