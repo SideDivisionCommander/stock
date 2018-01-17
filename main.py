@@ -63,10 +63,10 @@ def main():
     macd_para_file = 'macd_para.txt'
     new_level = 100
     mode = "init"
-    #mode = "normal"
-    #Get data from server
-    #if "init" == mode:
-    #    update_basic_stock_data(stock_basic_data_file, new_level)
+    mode = "normal"
+    Get data from server
+    if "init" == mode:
+        update_basic_stock_data(stock_basic_data_file, new_level)
     get_macd_golden_crossing(stock_basic_data_file, macd_filter_result_file, new_level, macd_para_file, mode)
     complete()
     return

@@ -79,7 +79,7 @@ def init_macd_para(stock_k_data_array, new_level, macd_para_file):
 '''
 Function: 
 '''
-def get_macd_cross_near_zero(macd_para_file, stock_code_array, macd_filter_result_file):
+def get_macd_cross_near_zero(macd_para_file, stock_code_array, macd_filter_result_file, lower_limit, upper_limit):
     tag1 = ';'
     tag2 = ','
     if os.path.exists(macd_filter_result_file):
@@ -94,7 +94,6 @@ def get_macd_cross_near_zero(macd_para_file, stock_code_array, macd_filter_resul
         macd_para_list = line.split(tag1)
         #pop the last element in list, because it is null
         macd_para_list.pop(len(macd_para_list)-1)
-        print(len(macd_para_list))
         macd_para_array = np.zeros([len(macd_para_list), 3])
         para_index = 0
         for para in macd_para_list:
@@ -113,9 +112,9 @@ def get_macd_cross_near_zero(macd_para_file, stock_code_array, macd_filter_resul
         for i in range(macd_para_array.shape[0]):
             if i == 0 or i == 1:
                 continue
-            elif macd_para_array[i, 2] >= 0.00 and macd_para_array[i, 2] <= 0.10\
-                and macd_para_array[i, 0] >= 0.00 and macd_para_array[i, 0] <= 0.10\
-                and macd_para_array[i, 1] >= 0.00 and macd_para_array[i, 1] <= 0.10\
+            elif macd_para_array[i, 2] >= lower_limit and macd_para_array[i, 2] <= upper_limit\
+                and macd_para_array[i, 0] >= lower_limit and macd_para_array[i, 0] <= upper_limit\
+                and macd_para_array[i, 1] >= lower_limit and macd_para_array[i, 1] <= upper_limit\
                 and macd_para_array[i - 2, 0] < macd_para_array[i - 2, 1]\
                 and macd_para_array[i - 1, 0] < macd_para_array[i - 1, 1]:
                 # occur just now
@@ -126,15 +125,13 @@ def get_macd_cross_near_zero(macd_para_file, stock_code_array, macd_filter_resul
                     f2.write("\n")
         f2.close()
         row_index += 1
-        if row_index%100 == 0:
-            print(str(row_index) + " complete")
     f1.close()
     return
 
 '''
 Function:
 '''
-def update_macd_para(macd_para_file, date, stock_basic_data):
+def update_macd_para(macd_para_file, last_date, date, stock_basic_data):
     tag = ';'
     tmp_txt = 'tmp.txt'
     f1 = open(macd_para_file, 'r')
@@ -146,15 +143,33 @@ def update_macd_para(macd_para_file, date, stock_basic_data):
             f2.write("\n")
             row_index += 1
             continue
-        close_price = get_newest_close_price(stock_basic_data[row_index - 1], date)
+        close_price_array = get_newest_close_price(stock_basic_data[row_index - 1], last_date)
         macd_para_list = line.split(tag)
-        newest_macd_para = calc_macd_para(macd_para_list[-1], close_price)
-        macd_para_list.pop(0)
-        macd_para_list.append(newest_macd_para)
+        if close_price_array.shape[0] <= 1:
+            print("All data has been updated.")
+            f2.close()
+            f1.close()
+            os.remove(tmp_txt)
+            return
+        elif close_price_array.shape[0] >= 90:
+            print("Data is too old, please run in init mode first.")
+            f2.close()
+            f1.close()
+            os.remove(tmp_txt)
+            return
+        for i in range(close_price_array.shape[0]):
+            # ignore the first line, because the first line should be old data
+            if i == 0:
+                continue
+            newest_macd_para = calc_macd_para(macd_para_list[-1], close_price[i, 2])
+            macd_para_list.pop(0)
+            macd_para_list.append(newest_macd_para)
         for para in macd_para_list:
             f2.write(para + tag)
         f2.write("\n")
         row_index += 1
+        if row_index%100 == 0:
+            print("Update macd para " + str(row_index) + " complete")
     f2.close()
     f1.close()
     os.remove(macd_para_file)
@@ -166,7 +181,7 @@ Function:
 '''
 def get_newest_close_price(stock_code, date):
     stock_k_data_array = np.array(ts.get_k_data(stock_code, start=date))
-    return stock_k_data_array[0, 2]
+    return stock_k_data_array[:, 2]
 
 '''
 Function:
@@ -186,10 +201,10 @@ def calc_macd_para(last_macd_para, last_close_price):
 '''
 Function: 
 '''
-def get_macd_golden_crossing(stock_basic_data_file, macd_filter_result_file, new_level, macd_para_file, mode):
+def get_macd_golden_crossing(stock_basic_data_file, macd_filter_result_file, new_level, macd_para_file, mode, lower_limit=0.00, upper_limit=0.10):
     #stock_basic_data = genfromtxt(stock_basic_data_file, delimiter=",")
     stock_basic_data = get_basic_data(stock_basic_data_file) 
-    '''
+    
     if "init" == mode:
         # Update macd_para file from the time to market 
         if os.path.exists(macd_para_file):
@@ -209,18 +224,18 @@ def get_macd_golden_crossing(stock_basic_data_file, macd_filter_result_file, new
     elif "normal" == mode:
         date = time.strftime("%Y-%m-%d", time.localtime())
         f = open(macd_para_file, 'r')
-        first_line = f.readlines()[0]
-        if date == first_line:
+        last_date = f.readlines()[0]
+        if date == last_date:
             print("All data has been updated.")
             f.close()
             return
         f.close()
-        update_macd_para(macd_para_file, date, stock_basic_data[:, 0])
+        update_macd_para(macd_para_file, last_date, date, stock_basic_data[:, 0])
     else:
         print("Not valid mode, please check !")
         return
-    '''
-    get_macd_cross_near_zero(macd_para_file, stock_basic_data['code'], macd_filter_result_file)    
+    
+    get_macd_cross_near_zero(macd_para_file, stock_basic_data['code'], macd_filter_result_file, lower_limit, upper_limit)
     return 
 
         
