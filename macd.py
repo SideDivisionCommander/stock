@@ -211,8 +211,10 @@ def get_macd_golden_crossing(stock_basic_data_file, macd_filter_result_file, new
                 print("Init macd para " + str(i) + " complete")
     elif "normal" == mode:
         date = time.strftime("%Y-%m-%d", time.localtime())
+        print("Today date is: " + date)
         with open(macd_para_file, 'r') as f:
             last_date = f.readlines()[0]
+            print("Last update date is: " + last_date)
             if date == last_date:
                 print("All data has been updated.")
                 return
