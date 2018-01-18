@@ -142,13 +142,13 @@ def update_macd_para(macd_para_file, last_date, date, stock_basic_data):
                     continue
                 close_price_array = get_newest_close_price(stock_basic_data[row_index - 1], last_date)
                 macd_para_list = line.split(tag)
-                macd_para_list.pop()           
+                macd_para_list.pop()
                 if close_price_array.shape[0] >= 90:
                     print("Data is too old, please run in init mode first.")
                     os.remove(tmp_txt)
                     return
                 for i in range(close_price_array.shape[0]):
-                    newest_macd_para = calc_macd_para(macd_para_list[-1], close_price_array[i, 2])
+                    newest_macd_para = calc_macd_para(macd_para_list[-1], close_price_array[i])
                     macd_para_list.pop(0)
                     macd_para_list.append(newest_macd_para)
                 for para in macd_para_list:
@@ -182,7 +182,7 @@ def calc_macd_para(last_macd_para, last_close_price):
     EMA_12 = float(EMA_12) * 11 / 13 + last_close_price * 2 / 13
     EMA_26 = float(EMA_26) * 25 / 27 + last_close_price * 2 / 27
     DIFF = EMA_12 - EMA_26
-    DEA = DEA * 8 /10 + DIFF * 2 / 10
+    DEA = float(DEA )* 8 / 10 + DIFF * 2 / 10
     return repr(EMA_12) + ',' + repr(EMA_26) + ',' + repr(DEA)
 
 '''
