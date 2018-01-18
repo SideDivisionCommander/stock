@@ -17,7 +17,7 @@ def get_basic_data(stock_basic_data_file):
     stock_basic_data = {}
     stock_basic_data['code'] = []
     stock_basic_data['timeToMarket'] = []
-    with open(stock_basic_data_file) as f:
+    with open(stock_basic_data_file, 'r') as f:
         for line in f:
             l = line.split(',')
             stock_code = l[0]
@@ -32,14 +32,13 @@ Function:
 def save_macd_para(macd_para_array, macd_para_file):
     tag1 = ","
     tag2 = ";"
-    f = open(macd_para_file, 'a')
-    #iter every row 
-    for i in range(macd_para_array.shape[0]): 
-        f.write(repr(macd_para_array[i, 0]) + tag1)
-        f.write(repr(macd_para_array[i, 1]) + tag1)
-        f.write(repr(macd_para_array[i, 2]) + tag2)
-    f.write("\n")
-    f.close()
+    with open(macd_para_file, 'a') as f:
+        #iter every row 
+        for i in range(macd_para_array.shape[0]): 
+            f.write(repr(macd_para_array[i, 0]) + tag1)
+            f.write(repr(macd_para_array[i, 1]) + tag1)
+            f.write(repr(macd_para_array[i, 2]) + tag2)
+        f.write("\n")
     return
 
 '''
@@ -85,47 +84,45 @@ def get_macd_cross_near_zero(macd_para_file, stock_code_array, macd_filter_resul
     if os.path.exists(macd_filter_result_file):
         print("Removing old filter macd result file: " + macd_filter_result_file)
         os.remove(macd_filter_result_file)
-    f1 = open(macd_para_file, 'r')
-    row_index = 0
-    for line in f1:
-        if row_index == 0:
-            row_index += 1
-            continue
-        macd_para_list = line.split(tag1)
-        #pop the last element in list, because it is null
-        macd_para_list.pop(len(macd_para_list)-1)
-        macd_para_array = np.zeros([len(macd_para_list), 3])
-        para_index = 0
-        for para in macd_para_list:
-            separate_para = para.split(tag2)
-            EMA_12 = float(separate_para[0])
-            EMA_26 = float(separate_para[1])
-            DIFF = EMA_12 - EMA_26
-            DEA = float(separate_para[2])
-            MACD = (DIFF - DEA) * 2
-            macd_para_array[para_index, 0] = round(DIFF, 2)
-            macd_para_array[para_index, 1] = round(DEA, 2)
-            macd_para_array[para_index, 2] = round(MACD, 2)
-            para_index += 1
-        
-        f2 = open(macd_filter_result_file, 'a')
-        for i in range(macd_para_array.shape[0]):
-            if i == 0 or i == 1:
+    with open(macd_para_file, 'r') as f1: 
+        row_index = 0
+        for line in f1:
+            if row_index == 0:
+                row_index += 1
                 continue
-            elif macd_para_array[i, 2] >= lower_limit and macd_para_array[i, 2] <= upper_limit\
-                and macd_para_array[i, 0] >= lower_limit and macd_para_array[i, 0] <= upper_limit\
-                and macd_para_array[i, 1] >= lower_limit and macd_para_array[i, 1] <= upper_limit\
-                and macd_para_array[i - 2, 0] < macd_para_array[i - 2, 1]\
-                and macd_para_array[i - 1, 0] < macd_para_array[i - 1, 1]:
-                # occur just now
-                if i >= 98:
-                    print("Occur: " + stock_code_array[row_index - 1] + " position: " + str(i))
-                    f2.write(stock_code_array[row_index - 1] + "\n")
-                    f2.write(str(i) + "\n")
-                    f2.write("\n")
-        f2.close()
-        row_index += 1
-    f1.close()
+            macd_para_list = line.split(tag1)
+            #pop the last element in list, because it is null
+            macd_para_list.pop(len(macd_para_list)-1)
+            macd_para_array = np.zeros([len(macd_para_list), 3])
+            para_index = 0
+            for para in macd_para_list:
+                separate_para = para.split(tag2)
+                EMA_12 = float(separate_para[0])
+                EMA_26 = float(separate_para[1])
+                DIFF = EMA_12 - EMA_26
+                DEA = float(separate_para[2])
+                MACD = (DIFF - DEA) * 2
+                macd_para_array[para_index, 0] = round(DIFF, 2)
+                macd_para_array[para_index, 1] = round(DEA, 2)
+                macd_para_array[para_index, 2] = round(MACD, 2)
+                para_index += 1
+            
+            with open(macd_filter_result_file, 'a') as f2:
+                for i in range(macd_para_array.shape[0]):
+                    if i == 0 or i == 1:
+                        continue
+                    elif macd_para_array[i, 2] >= lower_limit and macd_para_array[i, 2] <= upper_limit\
+                        and macd_para_array[i, 0] >= lower_limit and macd_para_array[i, 0] <= upper_limit\
+                        and macd_para_array[i, 1] >= lower_limit and macd_para_array[i, 1] <= upper_limit\
+                        and macd_para_array[i - 2, 0] < macd_para_array[i - 2, 1]\
+                        and macd_para_array[i - 1, 0] < macd_para_array[i - 1, 1]:
+                        # occur just now
+                        if i >= 98:
+                            print("Occur: " + stock_code_array[row_index - 1] + " position: " + str(i))
+                            f2.write(stock_code_array[row_index - 1] + "\n")
+                            f2.write(str(i) + "\n")
+                            f2.write("\n")
+            row_index += 1
     return
 
 '''
@@ -134,36 +131,32 @@ Function:
 def update_macd_para(macd_para_file, last_date, date, stock_basic_data):
     tag = ';'
     tmp_txt = 'tmp.txt'
-    f1 = open(macd_para_file, 'r')
-    f2 = open(tmp_txt, 'a')
-    row_index = 0
-    for line in f1:
-        if row_index == 0:
-            f2.write(date)
-            f2.write("\n")
-            row_index += 1
-            continue
-        close_price_array = get_newest_close_price(stock_basic_data[row_index - 1], last_date)
-        macd_para_list = line.split(tag)
-        macd_para_list.pop()           
-        if close_price_array.shape[0] >= 90:
-            print("Data is too old, please run in init mode first.")
-            f2.close()
-            f1.close()
-            os.remove(tmp_txt)
-            return
-        for i in range(close_price_array.shape[0]):
-            newest_macd_para = calc_macd_para(macd_para_list[-1], close_price_array[i, 2])
-            macd_para_list.pop(0)
-            macd_para_list.append(newest_macd_para)
-        for para in macd_para_list:
-            f2.write(para + tag)
-        f2.write("\n")
-        row_index += 1
-        if row_index%100 == 0:
-            print("Update macd para " + str(row_index) + " complete")
-    f2.close()
-    f1.close()
+    with open(macd_para_file, 'r') as f1:
+        with open(tmp_txt, 'a') as f2:
+            row_index = 0
+            for line in f1:
+                if row_index == 0:
+                    f2.write(date)
+                    f2.write("\n")
+                    row_index += 1
+                    continue
+                close_price_array = get_newest_close_price(stock_basic_data[row_index - 1], last_date)
+                macd_para_list = line.split(tag)
+                macd_para_list.pop()           
+                if close_price_array.shape[0] >= 90:
+                    print("Data is too old, please run in init mode first.")
+                    os.remove(tmp_txt)
+                    return
+                for i in range(close_price_array.shape[0]):
+                    newest_macd_para = calc_macd_para(macd_para_list[-1], close_price_array[i, 2])
+                    macd_para_list.pop(0)
+                    macd_para_list.append(newest_macd_para)
+                for para in macd_para_list:
+                    f2.write(para + tag)
+                f2.write("\n")
+                row_index += 1
+                if row_index%100 == 0:
+                    print("Update macd para " + str(row_index) + " complete")
     os.remove(macd_para_file)
     os.rename(tmp_txt, macd_para_file)
     return
@@ -204,11 +197,10 @@ def get_macd_golden_crossing(stock_basic_data_file, macd_filter_result_file, new
         if os.path.exists(macd_para_file):
             print("Removing old macd para file: " + macd_para_file)
             os.remove(macd_para_file)
-        f = open(macd_para_file,'a')
-        # Add timestamp at first row of file
-        f.write(time.strftime("%Y-%m-%d", time.localtime()))
-        f.write("\n")
-        f.close()
+        with open(macd_para_file,'a') as f:
+            # Add timestamp at first row of file
+            f.write(time.strftime("%Y-%m-%d", time.localtime()))
+            f.write("\n")
         
         for i in range(len(stock_basic_data['code'])):
             stock_code = stock_basic_data['code'][i]
@@ -219,13 +211,11 @@ def get_macd_golden_crossing(stock_basic_data_file, macd_filter_result_file, new
                 print("Init macd para " + str(i) + " complete")
     elif "normal" == mode:
         date = time.strftime("%Y-%m-%d", time.localtime())
-        f = open(macd_para_file, 'r')
-        last_date = f.readlines()[0]
-        if date == last_date:
-            print("All data has been updated.")
-            f.close()
-            return
-        f.close()
+        with open(macd_para_file, 'r') as f:
+            last_date = f.readlines()[0]
+            if date == last_date:
+                print("All data has been updated.")
+                return
         update_macd_para(macd_para_file, last_date, date, stock_basic_data['code'])
     else:
         print("Not valid mode, please check !")

@@ -36,13 +36,12 @@ def save_info_into_file(filtered_stock_dict, stock_basic_data_file):
     if os.path.exists(stock_basic_data_file):
         print("Removing old stock basic data file: " + stock_basic_data_file)
         os.remove(stock_basic_data_file)
-    f = open(stock_basic_data_file, 'a')
-    for i in range(len(filtered_stock_dict['code'])):
-        f.write(filtered_stock_dict['code'][i])
-        f.write(',')
-        f.write(filtered_stock_dict['timeToMarket'][i])
-        f.write('\n')
-    #np.savetxt(stock_basic_data_file, np_array, delimiter=",")
+    with open(stock_basic_data_file, 'a') as f:
+        for i in range(len(filtered_stock_dict['code'])):
+            f.write(filtered_stock_dict['code'][i])
+            f.write(',')
+            f.write(filtered_stock_dict['timeToMarket'][i])
+            f.write('\n')
     return
 
 '''
