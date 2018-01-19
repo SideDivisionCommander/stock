@@ -29,11 +29,12 @@ def get_basic_data(stock_basic_data_file):
 '''
 Function: 
 '''
-def save_macd_para(macd_para_array, macd_para_file):
+def save_macd_para(macd_para_array, macd_para_file, date):
     tag1 = ","
     tag2 = ";"
     with open(macd_para_file, 'a') as f:
-        #iter every row 
+        f.write(date + tag2)
+        #iter every row
         for i in range(macd_para_array.shape[0]): 
             f.write(repr(macd_para_array[i, 0]) + tag1)
             f.write(repr(macd_para_array[i, 1]) + tag1)
@@ -44,7 +45,7 @@ def save_macd_para(macd_para_array, macd_para_file):
 '''
 Function: 
 '''
-def init_macd_para(stock_k_data_array, new_level, macd_para_file):
+def init_macd_para(stock_k_data_array, new_level, macd_para_file, date):
     # Allocate space for close price in data_array
     close_price_array = np.zeros([stock_k_data_array.shape[0], 1])
     # Get all open price in data_array (all num in the first column)
@@ -72,7 +73,7 @@ def init_macd_para(stock_k_data_array, new_level, macd_para_file):
         macd_para_array[i, 1] = EMA_26
         macd_para_array[i, 2] = DEA
     # Save last new level EMA 12, EMA 26, DEA in file
-    save_macd_para(macd_para_array[stock_k_data_array.shape[0] - new_level:stock_k_data_array.shape[0], :], macd_para_file)
+    save_macd_para(macd_para_array[stock_k_data_array.shape[0] - new_level:stock_k_data_array.shape[0], :], macd_para_file, date)
     return 
 
 '''
@@ -87,10 +88,14 @@ def get_macd_cross_near_zero(macd_para_file, stock_code_array, macd_filter_resul
     with open(macd_para_file, 'r') as f1: 
         row_index = 0
         for line in f1:
+            '''
             if row_index == 0:
                 row_index += 1
                 continue
+            '''
             macd_para_list = line.split(tag1)
+            #pop the first element in list, because it is date
+            macd_para_list.pop(0)
             #pop the last element in list, because it is null
             macd_para_list.pop(len(macd_para_list)-1)
             macd_para_array = np.zeros([len(macd_para_list), 3])
@@ -118,8 +123,8 @@ def get_macd_cross_near_zero(macd_para_file, stock_code_array, macd_filter_resul
                         and macd_para_array[i - 1, 0] < macd_para_array[i - 1, 1]:
                         # occur just now
                         if i >= 98:
-                            print("Occur: " + stock_code_array[row_index - 1] + " position: " + str(i))
-                            f2.write(stock_code_array[row_index - 1] + "\n")
+                            print("Occur: " + stock_code_array[row_index] + " position: " + str(i))
+                            f2.write(stock_code_array[row_index] + "\n")
                             f2.write(str(i) + "\n")
                             f2.write("\n")
             row_index += 1
@@ -128,20 +133,26 @@ def get_macd_cross_near_zero(macd_para_file, stock_code_array, macd_filter_resul
 '''
 Function:
 '''
-def update_macd_para(macd_para_file, last_date, date, stock_basic_data):
+def update_macd_para(macd_para_file, date, stock_basic_data):
     tag = ';'
     tmp_txt = 'tmp.txt'
     with open(macd_para_file, 'r') as f1:
         with open(tmp_txt, 'a') as f2:
             row_index = 0
             for line in f1:
+                '''
                 if row_index == 0:
                     f2.write(date)
                     f2.write("\n")
                     row_index += 1
                     continue
-                close_price_array = get_newest_close_price(stock_basic_data[row_index - 1], last_date)
+                '''
                 macd_para_list = line.split(tag)
+                last_date = macd_para_list[0]
+                close_price_array = get_newest_close_price(stock_basic_data[row_index], last_date)
+                #pop the first element in list, because it is date
+                macd_para_list.pop(0) 
+                #pop the last element in list, because it is null
                 macd_para_list.pop()
                 if close_price_array.shape[0] >= 90:
                     print("Data is too old, please run in init mode first.")
@@ -151,6 +162,10 @@ def update_macd_para(macd_para_file, last_date, date, stock_basic_data):
                     newest_macd_para = calc_macd_para(macd_para_list[-1], close_price_array[i])
                     macd_para_list.pop(0)
                     macd_para_list.append(newest_macd_para)
+                if close_price_array.shape[0] >= 1:
+                    f2.write(date + tag)
+                else:
+                    f2.write(last_date + tag)
                 for para in macd_para_list:
                     f2.write(para + tag)
                 f2.write("\n")
@@ -197,20 +212,23 @@ def get_macd_golden_crossing(stock_basic_data_file, macd_filter_result_file, new
         if os.path.exists(macd_para_file):
             print("Removing old macd para file: " + macd_para_file)
             os.remove(macd_para_file)
+        '''
         with open(macd_para_file,'a') as f:
             # Add timestamp at first row of file
             f.write(time.strftime("%Y-%m-%d", time.localtime()))
             f.write("\n")
-        
+        '''
+        date = time.strftime("%Y-%m-%d", time.localtime())
         for i in range(len(stock_basic_data['code'])):
             stock_code = stock_basic_data['code'][i]
             stock_time_to_market = stock_basic_data['timeToMarket'][i]
             stock_k_data_array = np.array(ts.get_k_data(stock_code, start=stock_time_to_market))
-            init_macd_para(stock_k_data_array, new_level, macd_para_file)
+            init_macd_para(stock_k_data_array, new_level, macd_para_file, date)
             if i%100 == 0:
                 print("Init macd para " + str(i) + " complete")
     elif "normal" == mode:
         date = time.strftime("%Y-%m-%d", time.localtime())
+        '''
         print("Today date is: " + date)
         with open(macd_para_file, 'r') as f:
             last_date = f.readlines()[0]
@@ -218,7 +236,8 @@ def get_macd_golden_crossing(stock_basic_data_file, macd_filter_result_file, new
             if date == last_date:
                 print("All data has been updated.")
                 return
-        update_macd_para(macd_para_file, last_date, date, stock_basic_data['code'])
+        '''
+        update_macd_para(macd_para_file, date, stock_basic_data['code'])
     else:
         print("Not valid mode, please check !")
         return

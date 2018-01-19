@@ -71,6 +71,8 @@ def filter_stock_basic_data(stock_basic_data, new_level, stock_basic_data_file):
         #filtered_stock_array[i, 1] = stock_array[i, 1]
         filtered_stock_dict['code'].append(stock_code)
         filtered_stock_dict['timeToMarket'].append(stock_time_to_market)
+        if i%100 == 0:
+            print("Update stock basic date " + str(i) + " complete")
     '''
     t = 0
     print(len(unnecessary_line_index_list))
@@ -92,5 +94,6 @@ def update_basic_stock_data(stock_basic_data_file, new_level):
     filtered_stock_dict = filter_stock_basic_data(df, new_level, stock_basic_data_file)
     print("Save processed stock data into file: " + stock_basic_data_file)
     save_info_into_file(filtered_stock_dict, stock_basic_data_file)
+    os.remove('ddd.csv')
     print("Update stock basic data success !")
     return
