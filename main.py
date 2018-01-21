@@ -63,7 +63,7 @@ def main():
     macd_para_file = 'macd_para.txt'
     new_level = 100
     #mode = "init"
-    mode = "init"
+    mode = "normal"
     # Get data from server
     if "init" == mode:
         update_basic_stock_data(stock_basic_data_file, new_level)
