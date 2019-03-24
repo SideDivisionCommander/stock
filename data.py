@@ -73,13 +73,6 @@ def filter_stock_basic_data(stock_basic_data, new_level, stock_basic_data_file):
         filtered_stock_dict['timeToMarket'].append(stock_time_to_market)
         if i%100 == 0:
             print("Update stock basic date " + str(i) + " complete")
-    '''
-    t = 0
-    print(len(unnecessary_line_index_list))
-    for index in unnecessary_line_index_list:
-        sc.delete(filtered_stock_array, index-t, 0)
-        t += 1
-    '''
     return filtered_stock_dict
 
 '''

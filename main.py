@@ -1,5 +1,6 @@
 __author__ = 'SideDivisionCommander'
 
+import sys
 import pandas as pd
 from pandas import Series, DataFrame
 from data import update_basic_stock_data
@@ -56,20 +57,48 @@ C:::::C              o::::o     o::::om::::m   m::::m   m::::m p:::::p     p::::
 ''')
 
 def main():
-    welcome()
+    work_mode = 'routine'
+    time_level = 'D'
+    new_level_D = 100
+    new_level_W = 13
+    lower_limit_D = 0.00
+    upper_limit_D = 0.80
+    lower_limit_W = 0.00
+    upper_limit_W = 5.00
     #file config
     stock_basic_data_file = 'stockbasic.csv'
-    macd_filter_result_file = 'macd_crossing.txt'
-    macd_para_file = 'macd_para.txt'
-    new_level = 100
-    #mode = "init"
-    mode = "normal"
+    macd_filter_result_file_D = 'macd_crossing.txt'
+    macd_para_file_D = 'macd_para.txt'
+    macd_filter_result_file_W = 'macd_crossing_W.txt'
+    macd_para_file_W = 'macd_para_W.txt'
+    try:
+        # python main.py work_mode time_level
+        if len(sys.argv) != 3:
+            print("Invalid input para num.")
+            return -1
+        else:
+            work_mode = sys.argv[1]
+            if work_mode != 'routine' or work_mode != 'init':
+                print("Invalid input para 1, it must be \"routine\" or \"init\".")
+                return -1
+            work_mode = sys.argv[2]
+            if time_level != 'D' or time_level != 'W':
+                print("Invalid input para 2, it must be \"D\" or \"W\".)
+                return -1
+    except Exception:
+        print("Parse para failed.")
+        return -1
+    welcome()
+    
     # Get data from server
-    if "init" == mode:
-        update_basic_stock_data(stock_basic_data_file, new_level)
-    get_macd_golden_crossing(stock_basic_data_file, macd_filter_result_file, new_level, macd_para_file, mode, 0.00, 0.80)
+    if 'init' == work_mode:
+        update_basic_stock_data(stock_basic_data_file, new_level_D)
+    if 'D' == time_level:
+        get_macd_golden_crossing(stock_basic_data_file, macd_filter_result_file_D, time_level, new_level_D, macd_para_file_D, work_mode, lower_limit_D, upper_limit_D)
+    if 'W' == time_level:
+        get_macd_golden_crossing(stock_basic_data_file, macd_filter_result_file_W, time_level, new_level_W, macd_para_file_W, work_mode, lower_limit_W, upper_limit_W)
     complete()
-    return
+    return 0
 
 if __name__ == "__main__":
-    main()
+    exit(main())
