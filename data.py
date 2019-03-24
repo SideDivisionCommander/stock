@@ -89,7 +89,7 @@ def update_basic_stock_data(stock_basic_data_file, new_level):
     print("Getting the data from server ...")
     df = ts.get_stock_basics()
     df.to_csv('ddd.csv')
-    df = pd.read_csv('ddd.csv', encoding='gbk')
+    df = pd.read_csv('ddd.csv', encoding='utf-8')
     print("Updating stock basic data ...")
     filtered_stock_dict = filter_stock_basic_data(df, new_level, stock_basic_data_file)
     print("Save processed stock data into file: " + stock_basic_data_file)

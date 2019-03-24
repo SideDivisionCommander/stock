@@ -122,7 +122,7 @@ def get_macd_cross_near_zero(macd_para_file, stock_code_array, macd_filter_resul
                         and macd_para_array[i - 2, 0] < macd_para_array[i - 2, 1]\
                         and macd_para_array[i - 1, 0] < macd_para_array[i - 1, 1]:
                         # occur just now
-                        if i >= 98:
+                        if i >= 99:
                             print("Occur: " + stock_code_array[row_index] + " position: " + str(i))
                             f2.write(stock_code_array[row_index] + "\n")
                             f2.write(str(i) + "\n")
