@@ -28,7 +28,7 @@ class ConfigReader(object):
         print('Process Result File: %s', self.processResultFile)
         return
  
- if __name__ == '__main__':
+if __name__ == '__main__':
     cfg = ConfigReader()
     cfg.Show()
     return
