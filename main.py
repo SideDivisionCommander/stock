@@ -4,7 +4,6 @@ import pandas as pd
 from pandas import Series, DataFrame
 from data import update_basic_stock_data
 from macd import get_macd_golden_crossing
-import configparser
 
 def welcome():
     print('''
@@ -58,7 +57,10 @@ C:::::C              o::::o     o::::om::::m   m::::m   m::::m p:::::p     p::::
 
 def main():
     welcome()
-    #file config
+    # Read configuration
+    config = configparser.ConfigParser()
+    config.read('C:\\Users\\songlihui\\PycharmProjects\\AutoTest_02\\config\\config.ini', encoding='GB18030'
+    
     stock_basic_data_file = 'stockbasic.csv'
     macd_filter_result_file = 'macd_crossing.txt'
     macd_para_file = 'macd_para.txt'
