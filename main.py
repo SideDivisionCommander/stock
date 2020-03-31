@@ -4,6 +4,7 @@ import pandas as pd
 from pandas import Series, DataFrame
 from data import update_basic_stock_data
 from macd import get_macd_golden_crossing
+import configparser
 
 def welcome():
     print('''
