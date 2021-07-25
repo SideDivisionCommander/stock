@@ -62,7 +62,7 @@ def main():
     macd_filter_result_file = 'macd_crossing.txt'
     macd_para_file = 'macd_para.txt'
     new_level = 100
-    #mode = "init"
+    # mode = "init"
     mode = "normal"
     # Get data from server
     if "init" == mode:
